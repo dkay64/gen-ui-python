@@ -13,7 +13,7 @@ from gen_ui_backend.tools.invoice import invoice_parser
 from gen_ui_backend.tools.weather import weather_data
 
 
-class GenerativeUIState(TypedDict, total=False):
+class GenUIState(TypedDict, total=False):
     input: HumanMessage
     result: Optional[str]
     """Plain text response if no tool was used."""
@@ -23,7 +23,7 @@ class GenerativeUIState(TypedDict, total=False):
     """The result of a tool call."""
 
 
-def invoke_model(state: GenerativeUIState, config: RunnableConfig) -> GenerativeUIState:
+def invoke_model(state: GenUIState, config: RunnableConfig) -> GenUIState:
     tools_parser = JsonOutputToolsParser()
     initial_prompt = ChatPromptTemplate.from_messages(
         [
@@ -51,7 +51,7 @@ def invoke_model(state: GenerativeUIState, config: RunnableConfig) -> Generative
         return {"result": str(result.content)}
 
 
-def invoke_tools_or_return(state: GenerativeUIState) -> str:
+def invoke_tools_or_return(state: GenUIState) -> str:
     if "result" in state and isinstance(state["result"], str):
         return END
     elif "tool_calls" in state and isinstance(state["tool_calls"], list):
@@ -60,7 +60,7 @@ def invoke_tools_or_return(state: GenerativeUIState) -> str:
         raise ValueError("Invalid state. No result or tool calls found.")
 
 
-def invoke_tools(state: GenerativeUIState) -> GenerativeUIState:
+def invoke_tools(state: GenUIState) -> GenUIState:
     tools_map = {
         "github-repo": github_repo,
         "invoice-parser": invoice_parser,
@@ -76,7 +76,7 @@ def invoke_tools(state: GenerativeUIState) -> GenerativeUIState:
 
 
 def create_graph() -> CompiledGraph:
-    workflow = StateGraph(GenerativeUIState)
+    workflow = StateGraph(GenUIState)
 
     workflow.add_node("invoke_model", invoke_model)  # type: ignore
     workflow.add_node("invoke_tools", invoke_tools)
