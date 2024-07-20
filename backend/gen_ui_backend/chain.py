@@ -5,7 +5,7 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableConfig
 from langchain_openai import ChatOpenAI
-from langgraph.graph import END, StateGraph
+from langgraph.graph import START, END, StateGraph
 from langgraph.graph.graph import CompiledGraph
 
 from gen_ui_backend.tools.github import github_repo
@@ -16,11 +16,28 @@ from gen_ui_backend.tools.weather import weather_data
 class GenUIState(TypedDict, total=False):
     input: HumanMessage
     result: Optional[str]
-    """Plain text response if no tool was used."""
+    """Gives a plain text response if no tool was used."""
     tool_calls: Optional[List[dict]]
-    """A list of parsed tool calls."""
+    """Gives a list of parsed tool calls."""
     tool_result: Optional[dict]
-    """The result of a tool call."""
+    """Gives the result of a tool call."""
+
+def create_graph() -> CompiledGraph:
+    builder = StateGraph(GenUIState)
+
+    
+    builder.add_node("invoke_model", invoke_model)
+    builder.add_node("invoke_tools", invoke_tools)
+    builder.add_conditional_edges("invoke_model", invoke_tools_or_return)
+    
+    builder.add_edge(START, "invoke_model")
+    builder.add_edge("invoke_tools", END)
+
+    #builder.set_entry_point("invoke_model")
+    #builder.set_finish_point("invoke_tools")
+
+    graph = builder.compile()
+    return graph
 
 
 def invoke_model(state: GenUIState, config: RunnableConfig) -> GenUIState:
