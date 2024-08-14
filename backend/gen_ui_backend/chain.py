@@ -46,12 +46,13 @@ def invoke_model(state: GenUIState, config: RunnableConfig) -> GenUIState:
         [
             (
                 "system",
-                "You are a helpful assistant. You're provided a list of tools, and an input from the user.\n"
+                "You are a helpful all-knowing, AI assistant. You're provided a list of tools and an input from the user.\n"
                 + "Your job is to determine whether or not you have a tool which can handle the users input, or respond with plain text.",
             ),
             MessagesPlaceholder("input"),
         ]
     )
+    
     model = ChatOpenAI(model="gpt-4o", temperature=0, streaming=True)
     tools = [github_repo, invoice_parser, weather_data]
     model_with_tools = model.bind_tools(tools)
