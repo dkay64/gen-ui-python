@@ -60,7 +60,7 @@ def invoke_model(state: GenUIState, config: RunnableConfig) -> GenUIState:
     result = chain.invoke({"input": state["input"]}, config)
 
     if not isinstance(result, AIMessage):
-        raise ValueError("Invalid result from model. Expected AIMessage.")
+        raise ValueError("Resulted in an invalid result from the model. Expected AIMessage.")
 
     if isinstance(result.tool_calls, list) and len(result.tool_calls) > 0:
         parsed_tools = tools_parser.invoke(result, config)
@@ -75,7 +75,7 @@ def invoke_tools_or_return(state: GenUIState) -> str:
     elif "tool_calls" in state and isinstance(state["tool_calls"], list):
         return "invoke_tools"
     else:
-        raise ValueError("Invalid state. No result or tool calls found.")
+        raise ValueError("Resulted in an invalid state. There were no result or tool calls were found.")
 
 
 def invoke_tools(state: GenUIState) -> GenUIState:
@@ -90,17 +90,4 @@ def invoke_tools(state: GenUIState) -> GenUIState:
         selected_tool = tools_map[tool["type"]]
         return {"tool_result": selected_tool.invoke(tool["args"])}
     else:
-        raise ValueError("No tool calls found in state.")
-
-
-def create_graph() -> CompiledGraph:
-    workflow = StateGraph(GenUIState)
-
-    workflow.add_node("invoke_model", invoke_model)  # type: ignore
-    workflow.add_node("invoke_tools", invoke_tools)
-    workflow.add_conditional_edges("invoke_model", invoke_tools_or_return)
-    workflow.set_entry_point("invoke_model")
-    workflow.set_finish_point("invoke_tools")
-
-    graph = workflow.compile()
-    return graph
+        raise ValueError("There were no tool calls found in state.")
